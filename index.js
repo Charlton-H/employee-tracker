@@ -1,5 +1,6 @@
 const inquirer = require("inquirer");
 const figlet = require("figlet");
+const db = require("./db/connection");
 
 const asciiArt = () => {
   let wordArt = ["Employee", "Manager"];
@@ -55,7 +56,9 @@ const mainMenu = () => {
 
 const run = async () => {
   asciiArt();
-  const userSelection = await mainMenu();
+  // const userSelection = await mainMenu();
+
+  // console.log(db);
 };
 
 run();
