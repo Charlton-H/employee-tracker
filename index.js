@@ -52,10 +52,10 @@ const mainMenu = () => {
         addRole();
         break;
       case "View All Departments":
-        console.log("f");
+        viewDepartments();
         break;
       case "Add Department":
-        console.log("g");
+        addDepartment();
         break;
       case "Quit":
         break;
@@ -158,9 +158,7 @@ addEmployee = () => {
           `;
 
         db.query(sql, params, (err, result) => {
-          if (err) {
-            throw err;
-          }
+          if (err) throw err;
         });
 
         mainMenu();
@@ -331,7 +329,35 @@ viewDepartments = () => {
 };
 
 // case "Add Department":
-addDepartment = () => {};
+addDepartment = () => {
+  const addDepartmentPrompt = [
+    {
+      type: "input",
+      name: "departmentName",
+      message: "What is the name of the department you would like to add?",
+      validate: (departmentName) => {
+        if (departmentName) {
+          return true;
+        } else {
+          console.log("**FIELD REQUIRED** Please provide a department name.");
+          return false;
+        }
+      },
+    },
+  ];
+
+  return inquirer.prompt(addDepartmentPrompt).then((output) => {
+    const params = [output.departmentName];
+
+    const sql = `INSERT INTO departments (name) VALUES (?)`;
+
+    db.query(sql, params, (err, result) => {
+      if (err) throw err;
+    });
+
+    mainMenu();
+  });
+};
 
 const run = async () => {
   asciiArt();
