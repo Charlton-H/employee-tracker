@@ -2,7 +2,6 @@ const inquirer = require("inquirer");
 const figlet = require("figlet");
 const db = require("./db/connection");
 const cTable = require("console.table");
-const { query } = require("./db/connection");
 
 const asciiArt = () => {
   let wordArt = ["Employee", "Manager"];
@@ -26,6 +25,7 @@ const mainMenu = () => {
         "View All Employees",
         "Add Employee",
         "Update Employee Role & Manager",
+        "Delete Employee",
         "View All Roles",
         "Add Role",
         "View All Departments",
@@ -44,6 +44,9 @@ const mainMenu = () => {
         break;
       case "Update Employee Role & Manager":
         updateEmployee();
+        break;
+      case "Delete Employee":
+        deleteEmployee();
         break;
       case "View All Roles":
         viewRoles();
@@ -65,13 +68,12 @@ const mainMenu = () => {
 
 // case "View All Employees":
 viewEmployees = () => {
-  const sql = `SELECT employees.id AS 'Employee ID', first_name AS 'First Name', last_name AS 'Last Name',
-  SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.name AS departments, roles.salary, 
+  const sql = `SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.name AS departments, roles.salary, 
   CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
   FROM employees 
   LEFT JOIN roles on employees.role_id = roles.id 
   LEFT JOIN departments on roles.department_id = departments.id 
-  LEFT JOIN employees manager on manager.id = employees.manager_id;
+  LEFT JOIN employees manager on manager.id = employees.manager_id
   `;
 
   db.query(sql, (err, result) => {
@@ -236,11 +238,44 @@ updateEmployee = () => {
   });
 };
 
+deleteEmployee = () => {
+  const employeeSql = `SELECT * FROM employees`;
+
+  db.query(employeeSql, (err, result) => {
+    if (err) throw err;
+
+    const employees = result.map(({ id, first_name, last_name }) => ({
+      name: first_name + " " + last_name,
+      value: id,
+    }));
+
+    const deleteEmployeePrompt = [
+      {
+        type: "list",
+        name: "deleteEmployee",
+        message: "What is the name of the employee, you would like to delete?",
+        choices: employees,
+      },
+    ];
+
+    return inquirer.prompt(deleteEmployeePrompt).then((output) => {
+      const params = [output.deleteEmployee];
+      console.log(params);
+      const sql = `DELETE FROM employees WHERE id = (?) VALUES (?)`;
+      console.log(sql);
+      db.query(sql, params, (err, result) => {
+        if (err) throw err;
+      });
+      mainMenu();
+    });
+  });
+};
+
 // case "View All Roles":
 viewRoles = () => {
-  const sql = `SELECT roles.title AS Role Title, roles.id AS Role ID, roles.salary AS Salary, departments.name AS Department Name
+  const sql = `SELECT roles.title, roles.id, roles.salary, departments.name AS department_name
   FROM roles
-  LEFT JOIN departments on roles.department_id = department.id;
+  LEFT JOIN departments on roles.department_id = departments.id
   `;
 
   db.query(sql, (err, result) => {
