@@ -65,12 +65,13 @@ const mainMenu = () => {
 
 // case "View All Employees":
 viewEmployees = () => {
-  const sql = `SELECT id AS 'Employee ID', first_name AS 'First Name', last_name AS 'Last Name',
-  roles.title, roles.salary, departments.name, CONCAT(managers.first + ' ' + managers.last) AS 'Manager'
-  FROM employees
-  LEFT JOIN employees.managers ON employees.manager_id = managers.id
-  LEFT JOIN roles ON employees.role_id = roles.id
-  LEFT JOIN departments ON roles.department_id = departments.id
+  const sql = `SELECT employees.id AS 'Employee ID', first_name AS 'First Name', last_name AS 'Last Name',
+  SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.name AS departments, roles.salary, 
+  CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+  FROM employees 
+  LEFT JOIN roles on employees.role_id = roles.id 
+  LEFT JOIN departments on roles.department_id = departments.id 
+  LEFT JOIN employees manager on manager.id = employees.manager_id;
   `;
 
   db.query(sql, (err, result) => {
@@ -180,56 +181,46 @@ updateEmployee = () => {
       value: id,
     }));
 
-    const managerSql = `SELECT employees.first_name, employees.last_name, employees.id FROM employees`;
+    const roleSql = `SELECT title, id FROM roles`;
 
-    db.query(managerSql, (err, result) => {
+    db.query(roleSql, (err, result) => {
       if (err) throw err;
 
-      const managers = result.map(({ id, first_name, last_name }) => ({
-        name: first_name + " " + last_name,
+      const roles = result.map(({ title, id }) => ({
+        name: title,
         value: id,
       }));
 
-      const roleSql = `SELECT title, id FROM roles`;
+      const updateEmployeePrompt = [
+        {
+          type: "list",
+          name: "employee",
+          message: "Which employee would you like to update?",
+          choices: employees,
+        },
+        {
+          type: "list",
+          name: "employeeRole",
+          message: "What is the employee's role?",
+          choices: roles,
+        },
+        {
+          type: "list",
+          name: "employeeManager",
+          message: `Who is the employee's manager?`,
+          choices: employees,
+        },
+      ];
 
-      db.query(roleSql, (err, result) => {
-        if (err) throw err;
-
-        const roles = result.map(({ title, id }) => ({
-          name: title,
-          value: id,
-        }));
-
-        const updateEmployeePrompt = [
-          {
-            type: "list",
-            name: "employee",
-            message: "Which employee would you like to update?",
-            choices: employees,
-          },
-          {
-            type: "list",
-            name: "employeeRole",
-            message: "What is the employee's role?",
-            choices: roles,
-          },
-          {
-            type: "list",
-            name: "employeeManager",
-            message: `Who is the employee's manager?`,
-            choices: managers,
-          },
+      return inquirer.prompt(updateEmployeePrompt).then((output) => {
+        const params = [
+          output.employeeRole,
+          output.employeeManager,
+          output.employee,
         ];
 
-        return inquirer.prompt(updateEmployeePrompt).then((output) => {
-          const params = [
-            output.employeeRole,
-            output.employeeManager,
-            output.employee,
-          ];
-
-          console.log(params);
-          const sql = `UPDATE employees
+        console.log(params);
+        const sql = `UPDATE employees
           SET
             role_id = ?,
             manager_id = ?
@@ -237,12 +228,11 @@ updateEmployee = () => {
             id = ?
           `;
 
-          db.query(sql, params, (err, result) => {
-            if (err) throw err;
-          });
-
-          mainMenu();
+        db.query(sql, params, (err, result) => {
+          if (err) throw err;
         });
+
+        mainMenu();
       });
     });
   });
@@ -250,12 +240,10 @@ updateEmployee = () => {
 
 // case "View All Roles":
 viewRoles = () => {
-  const sql = `SELECT * FROM roles
+  const sql = `SELECT roles.title AS Role Title, roles.id AS Role ID, roles.salary AS Salary, departments.name AS Department Name
+  FROM roles
+  LEFT JOIN departments on roles.department_id = department.id;
   `;
-
-  // roles.title, roles.id, roles.salary, departments.name AS Department Name
-  // FROM roles
-  // LEFT JOIN departments on roles.department_id = department.id;
 
   db.query(sql, (err, result) => {
     if (err) throw err;
@@ -306,7 +294,7 @@ addRole = () => {
       },
       {
         type: "list",
-        name: "roleDeparment",
+        name: "roleDepartment",
         message: "What is the department which this role belongs to?",
         choices: departments,
       },
@@ -331,12 +319,23 @@ addRole = () => {
 };
 
 // case "View All Departments":
+viewDepartments = () => {
+  const sql = `SELECT * FROM departments`;
+
+  db.query(sql, (err, result) => {
+    if (err) throw err;
+
+    console.table(result);
+    mainMenu();
+  });
+};
 
 // case "Add Department":
+addDepartment = () => {};
 
 const run = async () => {
   asciiArt();
-  const userSelection = await mainMenu();
+  const userSelection = await mainMenu(); // await is a promise
 
   // console.log(db);
 };
