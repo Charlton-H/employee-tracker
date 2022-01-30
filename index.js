@@ -261,8 +261,7 @@ deleteEmployee = () => {
     return inquirer.prompt(deleteEmployeePrompt).then((output) => {
       const params = [output.deleteEmployee];
       console.log(params);
-      const sql = `DELETE FROM employees WHERE id = (?) VALUES (?)`;
-      console.log(sql);
+      const sql = `DELETE FROM employees WHERE id = ?`;
       db.query(sql, params, (err, result) => {
         if (err) throw err;
       });
