@@ -28,8 +28,10 @@ const mainMenu = () => {
         "Delete Employee",
         "View All Roles",
         "Add Role",
+        "Delete Role",
         "View All Departments",
         "Add Department",
+        "Delete Department",
         "Quit",
       ],
     },
@@ -54,11 +56,17 @@ const mainMenu = () => {
       case "Add Role":
         addRole();
         break;
+      case "Delete Role":
+        deleteRole();
+        break;
       case "View All Departments":
         viewDepartments();
         break;
       case "Add Department":
         addDepartment();
+        break;
+      case "Delete Department":
+        deleteDepartment();
         break;
       case "Quit":
         break;
@@ -154,7 +162,7 @@ addEmployee = () => {
           output.employeeManager,
         ];
 
-        console.log(params);
+        // console.log(params);
         const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
           VALUES (?,?,?,?)
           `;
@@ -219,7 +227,7 @@ updateEmployee = () => {
           output.employee,
         ];
 
-        console.log(params);
+        // console.log(params);
         const sql = `UPDATE employees
           SET
             role_id = ?,
@@ -260,7 +268,7 @@ deleteEmployee = () => {
 
     return inquirer.prompt(deleteEmployeePrompt).then((output) => {
       const params = [output.deleteEmployee];
-      console.log(params);
+      // console.log(params);
       const sql = `DELETE FROM employees WHERE id = ?`;
       db.query(sql, params, (err, result) => {
         if (err) throw err;
@@ -338,13 +346,46 @@ addRole = () => {
         output.roleDepartment,
       ];
 
-      console.log(params);
+      // console.log(params);
       const sql = `INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)`;
 
       db.query(sql, params, (err, result) => {
         if (err) throw err;
       });
 
+      mainMenu();
+    });
+  });
+};
+
+// case "Delete Role"
+deleteRole = () => {
+  const roleSql = `SELECT * FROM roles`;
+
+  db.query(roleSql, (err, result) => {
+    if (err) throw err;
+
+    const roles = result.map(({ id, title, salary }) => ({
+      name: title + " - " + salary,
+      value: id,
+    }));
+
+    const deleteRolePrompt = [
+      {
+        type: "list",
+        name: "deleteRole",
+        message: "Which role would you like to delete?",
+        choices: roles,
+      },
+    ];
+
+    return inquirer.prompt(deleteRolePrompt).then((output) => {
+      const params = [output.deleteRole];
+      // console.log(params);
+      const sql = `DELETE FROM roles WHERE id = ? `;
+      db.query(sql, params, (err, result) => {
+        if (err) throw err;
+      });
       mainMenu();
     });
   });
@@ -390,6 +431,39 @@ addDepartment = () => {
     });
 
     mainMenu();
+  });
+};
+
+// case "Delete Department"
+deleteDepartment = () => {
+  const departmentSql = `SELECT * FROM departments`;
+
+  db.query(departmentSql, (err, result) => {
+    if (err) throw err;
+
+    const departments = result.map(({ id, name }) => ({
+      name: name,
+      value: id,
+    }));
+
+    const deleteDepartmentPrompt = [
+      {
+        type: "list",
+        name: "deleteDepartment",
+        message: "Which role would you like to delete?",
+        choices: departments,
+      },
+    ];
+
+    return inquirer.prompt(deleteDepartmentPrompt).then((output) => {
+      const params = [output.deleteDepartment];
+      // console.log(params);
+      const sql = `DELETE FROM departments WHERE id = ? `;
+      db.query(sql, params, (err, result) => {
+        if (err) throw err;
+      });
+      mainMenu();
+    });
   });
 };
 
