@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const figlet = require("figlet");
 const db = require("./db/connection");
+const data = require("./db");
 const cTable = require("console.table");
 
 const asciiArt = () => {
@@ -112,6 +113,7 @@ addEmployee = () => {
         name: first_name + " " + last_name,
         value: id,
       }));
+      managers.unshift({ name: "None", value: null });
 
       const addEmployeePrompt = [
         {
@@ -393,14 +395,21 @@ deleteRole = () => {
 
 // case "View All Departments":
 viewDepartments = () => {
-  const sql = `SELECT * FROM departments`;
+  // const sql = `SELECT * FROM departments`;
+  // db.query(sql, (err, result) => {
+  //   if (err) throw err;
+  //   console.table(result);
+  //   mainMenu();
+  // });
 
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-
-    console.table(result);
-    mainMenu();
-  });
+  data
+    .findAllDepartments()
+    // depts is an arrray because SQL returns data in array of objects
+    // every row is object
+    .then(([depts]) => {
+      console.table(depts);
+    })
+    .then(() => mainMenu());
 };
 
 // case "Add Department":
